@@ -4,7 +4,7 @@
 #define HASHMAP_H
 
 #include <stdio.h>
-#include "status.h"
+#include "../status/status.h"
 
 typedef struct hash_map hash_map;
 

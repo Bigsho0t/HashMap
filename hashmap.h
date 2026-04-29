@@ -4,7 +4,7 @@
 #define HASHMAP_H
 
 #include <stdio.h>
-#include "../status/status.h"
+#include "status.h"
 
 typedef struct hash_map hash_map;
 
@@ -25,7 +25,7 @@ typedef struct hash_map hash_map;
  * propriedade da memória dos elementos inseridos, liberando-os automaticamente 
  * em operações de remoção ou limpeza.
  */
-hash_map* new_hash_map(size_t initial_size, size_t (*hash)(const void*), int (*cmp_key)(const void*, const void*), void (*free_key)(void*), void (*free_value)(void*));
+hash_map* new_hash_map(size_t value_size, size_t (*hash)(const void*), int (*cmp_key)(const void*, const void*), void (*free_key)(void*), void (*free_value)(void*));
 
 /**
  * @brief Insere ou atualiza um par chave-valor no mapa.
@@ -64,6 +64,22 @@ status hash_map_remove(hash_map* hm, const void* key);
  * ou se os parâmetros forem inválidos.
  */
 void* hash_map_get(const hash_map* hm, void* key);
+
+/**
+ * @brief Retorna a quantidade de elementos armazenados do hash_map, utiliza assert para garantir que o mesmo não é NULL.
+ * * @param hm Instância do hash_map.
+ * @return size_t Quantidade de elementos armazenados no hash_map (count)
+ */
+size_t hash_map_count(const hash_map* mp);
+
+/**
+ * @brief Transforma todos os valores armazenados no hash_map em um vetor.
+ * * @param hm Instância do hash_map.
+ * @return 
+ * - void* : Valores obtidos com sucesso. 
+ * - NULL: Se 'hm' for nulo ou estiver vazio.
+ */
+void* hash_map_values(const hash_map* hm);
 
 /**
  * @brief Remove e libera todos os elementos contidos no mapa.

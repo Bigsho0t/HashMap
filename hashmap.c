@@ -1,9 +1,11 @@
 #include "hashmap.h"
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
+#include <string.h>
 
 #define RESIZE_FACTOR 0.75
-#define SMALLEST_SIZE 31
+#define SMALLEST_SIZE 101
 
 typedef struct hash_node {
     void* key;
@@ -16,6 +18,7 @@ typedef struct hash_map {
     hash_node** table;
     size_t count;
     size_t size;
+    size_t value_size;
     size_t (*hash)(const void*);
     int (*cmp_key)(const void*, const void*);
     void (*free_key)(void*);
@@ -44,14 +47,10 @@ static size_t next_prime(size_t n) {
     return n;
 }
 
-hash_map* new_hash_map(size_t initial_size, size_t (*hash)(const void*), int (*cmp_key)(const void*, const void*), void (*free_key)(void*), void (*free_value)(void*)) {
+hash_map* new_hash_map(size_t value_size, size_t (*hash)(const void*), int (*cmp_key)(const void*, const void*), void (*free_key)(void*), void (*free_value)(void*)) {
 
     if (hash == NULL || cmp_key == NULL) {
         return NULL;
-    }
-
-    if (initial_size < SMALLEST_SIZE) {
-        initial_size = SMALLEST_SIZE;
     }
 
     hash_map* hm = malloc(sizeof(*hm));
@@ -60,8 +59,7 @@ hash_map* new_hash_map(size_t initial_size, size_t (*hash)(const void*), int (*c
         return NULL;
     }
 
-    size_t prime_size = next_prime(initial_size);
-    hm->table = calloc(prime_size, sizeof(hash_node*));
+    hm->table = calloc(SMALLEST_SIZE, sizeof(hash_node*));
 
     if (hm->table == NULL) {
         free(hm);
@@ -69,7 +67,8 @@ hash_map* new_hash_map(size_t initial_size, size_t (*hash)(const void*), int (*c
     }
 
     hm->count = 0;
-    hm->size = prime_size;
+    hm->size = SMALLEST_SIZE;
+    hm->value_size = value_size;
     hm->hash = hash;
     hm->cmp_key = cmp_key;
     hm->free_key = free_key;
@@ -214,7 +213,6 @@ status hash_map_remove(hash_map* hm, const void* key) {
 }
 
 void* hash_map_get(const hash_map* hm, void* key) {
-
     if (hm == NULL || hm->count == 0 || key == NULL) {
         return NULL;
     }
@@ -229,6 +227,38 @@ void* hash_map_get(const hash_map* hm, void* key) {
     }
 
     return NULL;
+}
+
+size_t hash_map_count(const hash_map* hm) {
+    assert(hm != NULL);
+    return hm->count;
+}
+
+void* hash_map_values(const hash_map* hm) {
+    if (hm == NULL || hm->count == 0) {
+        return NULL;
+    }
+    
+    void* values = malloc(hm->value_size * hm->count);
+    if (values == NULL) return NULL;
+    
+    char* target = (char*)values;
+    int j = 0;
+    
+    for (size_t i = 0; i < hm->size; i++) {
+        hash_node* current = hm->table[i];
+        
+        while (current != NULL) {
+            void* destination = target + (j * hm->value_size);
+            
+            memcpy(destination, current->value, hm->value_size);
+            
+            j++;
+            current = current->next;
+        }
+    }
+    
+    return values;
 }
 
 status hash_map_clear(hash_map* hm) {
